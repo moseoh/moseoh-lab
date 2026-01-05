@@ -6,8 +6,10 @@ services:
       - ./migrations:/migrations
     command: >
       migrate apply
-      --url "postgres://${DB_USER}:${DB_PASSWORD}@db:${DB_PORT}/${DB_NAME}?sslmode=disable"
+      --url "postgres://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}?sslmode=disable"
       --dir "file:///migrations"
+    networks:
+      - database-network
 
   bot:
     build: .
