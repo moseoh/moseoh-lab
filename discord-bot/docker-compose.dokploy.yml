@@ -6,7 +6,7 @@ services:
       - ./migrations:/migrations
     command: >
       migrate apply
-      --url "postgres://${DB_USER}:${DB_PASSWORD}@db:5432/${DB_NAME}?sslmode=disable"
+      --url "postgres://${DB_USER}:${DB_PASSWORD}@db:${DB_PORT}/${DB_NAME}?sslmode=disable"
       --dir "file:///migrations"
 
   bot:
@@ -20,7 +20,7 @@ services:
       - DISCORD_TOKEN=${DISCORD_TOKEN}
       - TZ=${TZ:-Asia/Seoul}
       - DB_HOST=${DB_HOST}
-      - DB_PORT=5432
+      - DB_PORT=${DB_PORT}
       - DB_USER=${DB_USER}
       - DB_PASSWORD=${DB_PASSWORD}
       - DB_NAME=${DB_NAME}
