@@ -1,0 +1,38 @@
+services:
+  migrate:
+    image: arigaio/atlas:latest
+    container_name: discord-migrate
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./migrations:/migrations
+    command: >
+      migrate apply
+      --url "postgres://${DB_USER}:${DB_PASSWORD}@db:5432/${DB_NAME}?sslmode=disable"
+      --dir "file:///migrations"
+
+  bot:
+    build: .
+    container_name: discord-bot
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    environment:
+      - DISCORD_TOKEN=${DISCORD_TOKEN}
+      - TZ=${TZ:-Asia/Seoul}
+      - DB_HOST=${DB_HOST}
+      - DB_PORT=5432
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_NAME=${DB_NAME}
+
+    networks:
+      - database-network
+
+networks:
+  database-network:
+    external: true
