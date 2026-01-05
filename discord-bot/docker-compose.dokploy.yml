@@ -2,9 +2,6 @@ services:
   migrate:
     image: arigaio/atlas:latest
     container_name: discord-migrate
-    depends_on:
-      db:
-        condition: service_healthy
     volumes:
       - ./migrations:/migrations
     command: >
@@ -17,8 +14,6 @@ services:
     container_name: discord-bot
     restart: unless-stopped
     depends_on:
-      db:
-        condition: service_healthy
       migrate:
         condition: service_completed_successfully
     environment:
