@@ -1,0 +1,12 @@
+DISCORD_TOKEN=your_discord_bot_token_here
+NOTIFICATION_CHANNEL_ID=your_channel_id_here
+
+# Timezone (default: Asia/Seoul)
+TZ=Asia/Seoul
+
+# PostgreSQL
+DB_HOST=localhost
+DB_PORT=5432
+DB_USER=postgres
+DB_PASSWORD=your_password_here
+DB_NAME=discord
