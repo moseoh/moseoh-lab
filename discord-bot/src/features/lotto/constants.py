@@ -21,7 +21,7 @@ class LottoConstants:
     SATURDAY_HOURS: tuple[int, ...] = (12, 13, 14, 15, 16, 17)
     WEEK_START: WeekStart = WeekStart()
     BUTTON_ID: str = "lotto_purchase_complete"
-    PURCHASE_URL: str = "https://www.dhlotto.co.kr/common.do?method=main"
+    PURCHASE_URL: str = "https://www.dhlottery.co.kr/"
     MESSAGES: Messages = Messages()
 
 

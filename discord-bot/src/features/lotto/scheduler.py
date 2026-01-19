@@ -36,19 +36,21 @@ def start_lotto_scheduler(client: discord.Client) -> AsyncIOScheduler:
                 except Exception as e:
                     logger.error(f"알림 전송 실패 (guild={row.guild_id}): {e}")
 
-    # 일~금: 13시, 18시
+    # 월~금: 13시, 18시
     weekday_hours = ",".join(str(h) for h in LOTTO.WEEKDAY_HOURS)
     scheduler.add_job(
         send_reminder,
         CronTrigger(
-            day_of_week="sun,mon,tue,wed,thu,fri",
+            day_of_week="mon,tue,wed,thu,fri",
             hour=weekday_hours,
             minute=0,
             timezone=timezone,
         ),
-        args=["일~금"],
+        args=["월~금"],
     )
-    logger.info(f"스케줄 등록: 일~금 {', '.join(str(h) for h in LOTTO.WEEKDAY_HOURS)}시 ({timezone})")
+    logger.info(
+        f"스케줄 등록: 월~금 {', '.join(str(h) for h in LOTTO.WEEKDAY_HOURS)}시 ({timezone})"
+    )
 
     # 토요일: 12시~17시
     saturday_hours = ",".join(str(h) for h in LOTTO.SATURDAY_HOURS)
@@ -62,7 +64,9 @@ def start_lotto_scheduler(client: discord.Client) -> AsyncIOScheduler:
         ),
         args=["토요일"],
     )
-    logger.info(f"스케줄 등록: 토요일 {', '.join(str(h) for h in LOTTO.SATURDAY_HOURS)}시 ({timezone})")
+    logger.info(
+        f"스케줄 등록: 토요일 {', '.join(str(h) for h in LOTTO.SATURDAY_HOURS)}시 ({timezone})"
+    )
 
     scheduler.start()
     return scheduler
