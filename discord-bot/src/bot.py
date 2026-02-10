@@ -24,7 +24,8 @@ class DiscordBot(discord.Client):
 
     async def on_ready(self):
         logger.info(f"봇이 준비되었습니다! {self.user}로 로그인했습니다.")
-        self.scheduler = start_lotto_scheduler(self)
+        if self.scheduler is None:
+            self.scheduler = start_lotto_scheduler(self)
 
     async def on_interaction(self, interaction: discord.Interaction):
         if interaction.type != discord.InteractionType.component:
