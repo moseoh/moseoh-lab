@@ -1,5 +1,4 @@
 ---
-name: git-commit
 description: 변경 사항을 분석하여 conventional commit 형식으로 자동 커밋 생성
 agent: build
 model: openai/gpt-5.3-codex-spark

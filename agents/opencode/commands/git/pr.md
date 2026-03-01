@@ -1,5 +1,4 @@
 ---
-name: git-pr
 description: 브랜치 생성 -> 푸쉬 -> PR 생성
 agent: build
 model: openai/gpt-5.3-codex-spark
