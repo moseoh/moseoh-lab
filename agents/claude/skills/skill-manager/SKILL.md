@@ -2,7 +2,7 @@
 name: skill-manager
 description: 스킬을 생성, 점검, 리팩토링할 때 사용.
 argument-hint: [create|review|refactor] [스킬이름]
-disable-model-invocation: true
+disable-model-invocation: false
 user-invocable: true
 allowed-tools:
   - AskUserQuestion

@@ -35,8 +35,8 @@ Arguments: $ARGUMENTS
 
 ## Important Notice
 
-- **절대 금지**: 커밋 메시지에 AI가 생성했다는 문구(예: "Generated with Claude Code", "Co-Authored-By: Claude", "by ChatGPT", "AI generated")를 **절대** 포함하지 마세요.
 - 단일 메시지 응답 내에서 한꺼번에 실행하세요.
+- 메시지에 Co-Authored-By 또는 Claude 관련 attribution을 절대 포함하지 마세요.
 
 ## Output Format
 
