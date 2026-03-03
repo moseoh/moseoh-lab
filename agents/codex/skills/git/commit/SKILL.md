@@ -1,14 +1,6 @@
 ---
-name: git-commit
-description: 변경 사항을 분석하여 conventional commit 형식으로 자동 커밋 생성
-argument-hint: "[language] [@files...]"
-model: claude-sonnet-4-5
-allowed-tools:
-  - Bash(git add *)
-  - Bash(git status *)
-  - Bash(git commit *)
-disable-model-invocation: true
-user-invocable: true
+name: commit
+description: Git 저장소의 변경 사항을 분석해 Conventional Commits 형식으로 단일 커밋을 생성합니다. 사용자가 커밋 생성, 커밋 메시지 작성, @파일 지정 커밋을 요청할 때 사용하세요.
 ---
 
 ## Your task

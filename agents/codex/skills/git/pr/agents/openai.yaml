@@ -1,0 +1,6 @@
+interface:
+  display_name: "git-pr"
+  short_description: "브랜치 푸시 후 GitHub Pull Request 생성"
+
+policy:
+  allow_implicit_invocation: false
