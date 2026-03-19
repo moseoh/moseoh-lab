@@ -1,11 +1,13 @@
 ---
 name: "orch"
-description: "사용자가 /orch 명령으로 명시적으로 호출할 때만 사용하는 멀티 pane 오케스트레이션 스킬이다. cmux pane으로 여러 프로젝트(docs, be, fe 등)에 에이전트(cx/cc)를 띄우고 작업을 분배한다. 자동 트리거하지 않는다."
+description: "사용자가 /orch 명령으로 명시적으로 호출할 때만 사용하는 멀티 pane 오케스트레이션 스킬이다. cmux pane으로 여러 작업 저장소에 에이전트(cx/cc)를 띄우고 작업을 분배한다. 필요하면 같은 작업 pane 안에 worker surface를 추가해 병렬 fan-out한다. 자동 트리거하지 않는다."
 ---
 
 # 멀티 Pane 오케스트레이션
 
-하나의 오케스트레이션 pane에서 여러 프로젝트 pane(docs, be, fe 등)에 작업을 분배하고, 각 pane에서 에이전트(cx 또는 cc)를 실행하며, 결과를 수집하는 워크플로다.
+하나의 오케스트레이션 pane에서 여러 작업 pane에 작업을 분배하고, 각 pane에서
+에이전트(cx 또는 cc)를 실행하며, 결과를 수집하는 워크플로다. 필요하면 같은
+작업 pane 안에 worker surface를 추가해 병렬 fan-out할 수 있다.
 
 이 스킬은 "무엇을, 어떤 순서로 할지"에 집중한다. pane을 어떻게 만들고 제어하는지는 터미널 스킬(cmux skill)이 담당한다.
 
@@ -20,12 +22,24 @@ pane 제어에 사용할 터미널 스킬: **cmux** (기본)
 ```
 ┌───────────┬───────────┬───────────┬───────────┐
 │           │           │           │           │
-│   orch    │   docs    │    be     │    fe     │
+│   orch    │  work-a   │  work-b   │  work-c   │
 │           │           │           │           │
 └───────────┴───────────┴───────────┴───────────┘
 ```
 
-왼쪽은 오케스트레이션 pane(사용자가 명령하는 곳), 나머지는 각 프로젝트 pane이다. pane 수와 이름은 `orchestrator.json`의 설정에 따라 달라진다.
+기본 레이아웃은 좌측 `orch` pane 1개와, 그 오른쪽에 `orchestrator.json`에
+정의된 작업 pane들을 가로로 배치한 구조다. pane 수와 이름은
+`orchestrator.json`의 설정에 따라 달라진다.
+
+기본 원칙:
+
+- 기본 레이아웃은 `orch | work-a | work-b | work-c` 같은 가로 배치를 유지한다.
+- `orchestrator.json`에 정의된 작업 pane은 작업 실행 시 항상 전부 먼저 구성한다.
+- 각 작업 pane의 첫 번째 surface는 에이전트를 띄우지 않는 터미널 placeholder로 유지한다.
+- 병렬 작업이 필요할 때는 기본 pane 레이아웃을 더 쪼개기보다, 기존 작업 pane
+  안에 worker surface를 추가한다.
+- 에이전트 worker surface는 두 번째 surface부터 사용하며, 이름은
+  `<pane-name>-1`, `<pane-name>-2`, `<pane-name>-3`처럼 붙인다.
 
 ## 설정
 
@@ -36,20 +50,20 @@ pane 제어에 사용할 터미널 스킬: **cmux** (기본)
 ```json
 {
   "panes": {
-    "docs": {
-      "dir": "/path/to/docs",
+    "work-a": {
+      "dir": "/path/to/project-a",
       "agent": "cx",
-      "alias": ["문서", "doc", "documentation"]
+      "alias": ["별칭-a"]
     },
-    "be": {
-      "dir": "/path/to/backend",
+    "work-b": {
+      "dir": "/path/to/project-b",
       "agent": "cx",
-      "alias": ["백엔드", "서버", "backend", "api"]
+      "alias": ["별칭-b"]
     },
-    "fe": {
-      "dir": "/path/to/frontend",
+    "work-c": {
+      "dir": "/path/to/project-c",
       "agent": "cx",
-      "alias": ["프론트엔드", "프론트", "frontend", "ui"]
+      "alias": ["별칭-c"]
     }
   }
 }
@@ -57,7 +71,7 @@ pane 제어에 사용할 터미널 스킬: **cmux** (기본)
 
 - `dir`: 해당 pane이 작업할 디렉토리 경로
 - `agent`: 기본 에이전트. `cx`(codex, 기본값) 또는 `cc`(claude code). 사용자가 "claude로 실행해줘"라고 하면 해당 pane만 `cc`로 오버라이드한다
-- `alias` (선택): 사용자가 pane을 지칭할 때 쓸 수 있는 별칭 목록. "서버 작업해" → be pane으로 매핑
+- `alias` (선택): 사용자가 pane을 지칭할 때 쓸 수 있는 별칭 목록
 
 위 JSON 블록은 형식 예시일 뿐이다. 여기에 있는 경로, pane 이름, agent 값을 현재 프로젝트의 실제 값으로 간주하면 안 된다.
 
@@ -74,7 +88,7 @@ pane 제어에 사용할 터미널 스킬: **cmux** (기본)
 
 - `orchestrator.json`이 없을 때는 먼저 사용자에게 필요한 pane 목록과 각 디렉토리 경로를 요청한다.
 - 사용자 답변 전에는 현재 작업 디렉터리 밖의 경로 존재 여부를 확인하지 않는다.
-- 사용자 답변 전에는 임의의 pane 이름(`docs`, `be`, `fe` 등)을 기본값처럼 전제하지 않는다.
+- 사용자 답변 전에는 임의의 pane 이름을 기본값처럼 전제하지 않는다.
 - 설정 파일 생성은 사용자에게 받은 값으로만 수행한다.
 
 권장 질문 항목:
@@ -92,6 +106,26 @@ pane 제어에 사용할 터미널 스킬: **cmux** (기본)
 - 탭/윈도우 이름으로 매칭하여 기존 pane을 재사용
 - 없는 pane만 새로 생성하고 이름을 지정
 - 각 pane의 참조(surface ref, pane index 등)를 보관
+- 각 pane의 첫 번째 surface는 placeholder 터미널로 유지한다
+
+이 단계의 목표는 "필요한 pane을 그때그때 만드는 것"이 아니라, 설정된 작업 pane을
+항상 전부 준비해 두는 것이다.
+
+placeholder surface 규칙:
+
+- 각 작업 pane의 첫 surface 이름은 pane 이름 그대로 둔다
+- 이 surface는 사용자의 수동 작업 공간 겸 placeholder다
+- 기본적으로 에이전트는 이 surface에 띄우지 않는다
+- 에이전트를 실행할 때는 같은 pane 안에 새 surface를 추가해서 사용한다
+
+이 단계에서 보관해야 할 것:
+
+- 기본 pane ref
+- placeholder surface ref
+- 같은 pane 안에 추가된 worker surface ref 목록
+
+즉, 오케스트레이션 관점에서 관리 대상은 "pane만"이 아니라 "pane + worker
+surface 집합"이다.
 
 ### 3단계: 작업 분배
 
@@ -99,14 +133,17 @@ pane 제어에 사용할 터미널 스킬: **cmux** (기본)
 
 각 pane에 터미널 스킬을 사용하여 명령을 전송한다. 이때 pane 상태에 따라 전송 방식이 달라진다:
 
-**에이전트가 아직 없는 pane (셸 상태)** — 최초 실행:
+**worker surface가 아직 없는 pane** — 최초 실행:
 
-- 디렉토리 이동 + 에이전트(cx/cc) 실행 + 프롬프트를 한 번에 전송
+- placeholder surface는 그대로 둔다
+- 같은 pane에 새 worker surface를 만든다
+- 새 worker surface에서 디렉토리 이동 + 에이전트(cx/cc) 실행 + 프롬프트를 한 번에 전송
 
-**에이전트가 이미 실행 중인 pane (대기 상태)** — 추가 작업:
+**에이전트 worker surface가 이미 있는 pane (대기 상태)** — 추가 작업:
 
-- 에이전트가 대기 중인지 먼저 확인 (화면 읽기로 프롬프트 표시 여부 체크)
-- 대기 상태이면 프롬프트만 전송 (에이전트 재실행 불필요)
+- 적절한 worker surface를 먼저 고른다
+- 해당 worker가 대기 중인지 확인한다
+- 대기 상태이면 그 worker에 프롬프트만 전송한다
 
 에이전트가 응답 생성 중일 때 입력을 보내면 꼬이므로, 반드시 대기 상태를 확인한 후 전송한다.
 
@@ -114,13 +151,62 @@ pane 제어에 사용할 터미널 스킬: **cmux** (기본)
 
 - 기본: `orchestrator.json`의 `agent` 값 (보통 `cx`)
 - 사용자가 "claude로 해줘" 또는 "cc로 실행해줘"라고 하면 해당 pane만 `cc` 사용
-- 특정 pane만 다른 에이전트를 쓰고 싶으면: "be는 claude로 실행해줘"
+- 특정 pane만 다른 에이전트를 쓰고 싶으면 해당 pane만 오버라이드한다
+
+### 3-1단계: 병렬 fan-out 판단
+
+기본은 pane당 worker 1개다. 다만 아래 조건이면 같은 작업 pane 안에 worker
+surface를 추가해 병렬 fan-out한다.
+
+- 같은 저장소 안에서 서로 다른 하위 작업으로 자연스럽게 분리될 때
+- 산출물 파일이 worker별로 분리 가능할 때
+- 한 worker가 조사, 다른 worker가 구현처럼 역할을 나눌 수 있을 때
+- 기존 worker가 오래 걸리는 동안 같은 pane backlog를 더 처리할 수 있을 때
+- 다른 pane이 idle인데 전체 backlog가 남아 있을 때
+
+반대로 아래 조건이면 fan-out하지 않는다.
+
+- 같은 파일을 동시에 수정할 가능성이 높을 때
+- 결과가 한 파일에 강하게 얽혀 있어 병합 비용이 큰 때
+- 짧은 작업이라 나누는 오버헤드가 더 큰 때
+
+권장 naming:
+
+- placeholder surface: `<pane-name>`
+- 첫 번째 agent worker: `<pane-name>-1`
+- 추가 worker: `<pane-name>-2`, `<pane-name>-3`
+
+예: `work-b`, `work-b-1`, `work-b-2`
+
+fan-out 방식:
+
+1. 먼저 pane의 placeholder surface를 확인한다.
+2. 첫 agent worker가 없으면 같은 pane에 새 surface를 만들고 `<pane-name>-1`로 이름 붙인다.
+3. 추가 병렬이 필요하면 `<pane-name>-2`, `<pane-name>-3`를 같은 방식으로 만든다.
+4. worker별 책임 범위와 산출물 파일을 분리한다.
+5. 결과 수집 시 worker별 결과를 먼저 확인한 뒤 pane 단위로 병합한다.
+
+필수 규칙:
+
+- placeholder surface는 에이전트 전용 surface로 재사용하지 않는다.
+- worker를 늘릴 때는 같은 저장소라도 write scope를 명시적으로 분리한다.
+- worker별 결과 파일을 따로 두거나, 적어도 worker별 섹션을 나눠 기록한다.
+- 한 worker가 응답 생성 중이면 그 surface에는 새 입력을 보내지 않는다.
 
 ### 4단계: 결과 수집
 
 작업 분배 전에 이전 결과를 초기화해둔다. 에이전트(cx/cc)가 작업을 완료하면 터미널의 알림/출력을 통해 결과를 확인할 수 있다.
 
 사용자가 "결과 확인해줘", "다 끝났어?" 등으로 요청하면 터미널 스킬을 사용하여 결과를 수집한다. 수집한 결과를 pane별로 요약하여 사용자에게 보고한다. 아직 완료되지 않은 pane이 있으면 작업 진행 중으로 안내한다.
+
+결과 수집 순서:
+
+1. `list-notifications`로 에이전트 완료 알림 확인
+2. 필요한 worker surface를 `read-screen`으로 직접 확인
+3. worker별 결과를 pane 단위로 병합
+4. 최종적으로 사용자에게 pane 기준으로 보고
+
+수동 `notify`는 보조 수단일 뿐, 항상 수집 가능한 신호라고 가정하지 않는다.
 
 ## 사용자 요청 해석 가이드
 
@@ -130,34 +216,51 @@ pane 제어에 사용할 터미널 스킬: **cmux** (기본)
 
 > "API 기능을 추가해줘"
 
-하나의 기능을 docs/be/fe로 나눠서 분배한다:
+하나의 기능을 여러 작업 pane으로 나눠서 분배한다:
 
-- docs: API 문서 작성
-- be: API 엔드포인트 구현
-- fe: API 호출 UI 구현
+- 문서/기획 pane: 관련 문서 작성
+- 서버/API pane: 엔드포인트 구현
+- 클라이언트/UI pane: 호출 UI 구현
 
 ### 개별 지정형
 
-> "be에서는 인증 미들웨어 추가하고, fe에서는 로그인 페이지 만들어줘"
+> "작업 A에서는 인증 미들웨어 추가하고, 작업 B에서는 로그인 페이지 만들어줘"
 
 사용자가 지정한 대로 각 pane에 분배한다. 언급되지 않은 pane은 건드리지 않는다.
 
 ### 단일 pane형
 
-> "be에 작업 보내줘: 데이터베이스 마이그레이션 실행"
+> "특정 pane에 작업 보내줘: 데이터베이스 마이그레이션 실행"
 
 특정 pane 하나에만 작업을 보낸다.
 
 ### 에이전트 오버라이드형
 
-> "fe는 claude로 실행해줘"
+> "특정 pane은 claude로 실행해줘"
 
 해당 pane만 `cc`로 에이전트를 변경한다.
+
+### 내부 병렬형
+
+> "이 작업은 같은 저장소 안에서 둘로 나눠서 병렬로 처리해"
+
+같은 pane 안에 worker surface를 추가해 분배한다.
+
+- placeholder: 기존 pane surface 유지
+- 첫 worker: `<pane-name>-1`
+- 추가 worker: `<pane-name>-2`, `<pane-name>-3`
+- 산출물도 worker별로 분리해서 받는다
 
 ## 주의사항
 
 - pane을 새로 만들기 전에 반드시 기존 pane을 확인한다. 이미 작업 중인 에이전트가 있을 수 있다.
+- 작업 실행 시에는 설정된 work pane을 전부 먼저 준비하고, 각 pane의 첫 surface를
+  placeholder 터미널로 유지한다.
 - 에이전트가 실행 중인 pane에 새 명령을 보내면 입력이 꼬인다. 기존 작업 완료를 확인한 후 전송한다.
+- 기본 가로 pane 구조는 유지하고, 추가 병렬이 필요하면 같은 pane 안에 worker
+  surface를 추가한다.
+- 에이전트는 항상 placeholder가 아닌 worker surface(`<pane-name>-1`부터)에 띄운다.
+- 한 pane 안에 worker를 늘릴 때는 파일 ownership과 결과 병합 방식을 먼저 정한다.
 - 프롬프트에 큰따옴표가 포함되면 이스케이핑이 필요하다: `\"내용\"`
 - `orchestrator.json`의 디렉토리 경로가 실제로 존재하는지 첫 실행 시 확인한다.
 - `orchestrator.json`이 없으면 먼저 사용자 입력을 받아 파일을 생성한다. 이 단계보다 앞서 외부 디렉토리 탐색이나 pane 준비를 시작하면 안 된다.
