@@ -75,6 +75,60 @@ pane 제어에 사용할 터미널 스킬: **cmux** (기본)
 
 위 JSON 블록은 형식 예시일 뿐이다. 여기에 있는 경로, pane 이름, agent 값을 현재 프로젝트의 실제 값으로 간주하면 안 된다.
 
+## 런타임 상태 관리
+
+오케스트레이션 중 생성한 pane/surface ref, worker 배정 상태 같은 운영 정보는
+사용자 응답에 계속 노출하지 말고 프로젝트 루트의 런타임 JSON 파일로 관리한다.
+
+권장 파일:
+
+```text
+state/cmux-session.json
+```
+
+이 파일에는 최소한 아래 정보를 유지한다.
+
+- workspace ref
+- orchestration pane/surface 정보
+- 각 작업 pane ref
+- 각 pane의 placeholder surface ref
+- worker surface ref와 이름
+- worker별 현재 배정 task
+
+예시 구조:
+
+```json
+{
+  "workspace": { "ref": "workspace-or-window-id" },
+  "orchestration": {
+    "pane": "pane:2",
+    "surfaces": [
+      { "ref": "surface:3", "name": "orch", "role": "orchestration" }
+    ]
+  },
+  "workspaces": {
+    "work-a": {
+      "pane": "pane:6",
+      "placeholder": {
+        "ref": "surface:11",
+        "name": "work-a",
+        "dir": "/path/to/project-a"
+      },
+      "workers": [
+        { "ref": "surface:14", "name": "work-a-1", "task": "T-..." }
+      ]
+    }
+  }
+}
+```
+
+운영 규칙:
+
+- pane/surface를 새로 만들거나 닫을 때마다 JSON을 갱신한다.
+- worker에 task를 배정하거나 회수할 때도 JSON을 갱신한다.
+- 실제 cmux 상태와 JSON이 어긋난 것 같으면 cmux를 다시 조회해 JSON을 복구한다.
+- 이 파일은 내부 운영 상태 파일이지, 사용자 보고 문서가 아니다.
+
 ## 워크플로
 
 ### 1단계: 설정 로드 (전제 조건)
@@ -107,6 +161,7 @@ pane 제어에 사용할 터미널 스킬: **cmux** (기본)
 - 없는 pane만 새로 생성하고 이름을 지정
 - 각 pane의 참조(surface ref, pane index 등)를 보관
 - 각 pane의 첫 번째 surface는 placeholder 터미널로 유지한다
+- 확보한 pane/surface 정보를 런타임 JSON에 기록한다
 
 이 단계의 목표는 "필요한 pane을 그때그때 만드는 것"이 아니라, 설정된 작업 pane을
 항상 전부 준비해 두는 것이다.
@@ -183,8 +238,9 @@ fan-out 방식:
 1. 먼저 pane의 placeholder surface를 확인한다.
 2. 첫 agent worker가 없으면 같은 pane에 새 surface를 만들고 `<pane-name>-1`로 이름 붙인다.
 3. 추가 병렬이 필요하면 `<pane-name>-2`, `<pane-name>-3`를 같은 방식으로 만든다.
-4. worker별 책임 범위와 산출물 파일을 분리한다.
-5. 결과 수집 시 worker별 결과를 먼저 확인한 뒤 pane 단위로 병합한다.
+4. worker를 런타임 JSON에 기록하고 현재 task를 연결한다.
+5. worker별 책임 범위와 산출물 파일을 분리한다.
+6. 결과 수집 시 worker별 결과를 먼저 확인한 뒤 pane 단위로 병합한다.
 
 필수 규칙:
 
@@ -207,6 +263,99 @@ fan-out 방식:
 4. 최종적으로 사용자에게 pane 기준으로 보고
 
 수동 `notify`는 보조 수단일 뿐, 항상 수집 가능한 신호라고 가정하지 않는다.
+
+사용자 보고 규칙:
+
+- 사용자에게는 "어떤 작업을 어디에 분배했는지", "무엇이 끝났는지", "무엇이
+  진행 중인지"를 중심으로 보고한다.
+- 병렬 작업을 실행한 직후에는 worker별 분배 목록을 먼저 짧게 알려준다.
+- 이때 보고 형식은 내부 ref가 아니라 task 중심으로 적는다.
+  - 예: `docs-1: Site 신청/전환 흐름 문서`
+  - 예: `server-1: 최신 OpenAPI 기준 수동 REST/예외 경로 분류`
+- `surface:11`, `pane:6` 같은 cmux 내부 식별자는 기본적으로 사용자 응답에
+  노출하지 않는다.
+- 내부 식별자가 필요한 경우는 디버깅, 복구, 또는 사용자가 명시적으로 요청한
+  경우로 한정한다.
+- 내부 식별자는 런타임 JSON에서 관리하고, 사용자 응답은 task 중심으로 요약한다.
+
+### 완료 알림 규칙
+
+병렬 작업을 실행한 뒤, 오케스트레이션 에이전트는 사용자에게
+"어떤 worker 완료를 보면 나에게 알려주면 되는지"를 함께 요청해야 한다.
+핵심은 "어떤 worker들을 묶어서 알려달라고 할지"와 "끝나는 즉시 알려달라고 할지"를
+명확히 정하는 것이다.
+
+완료 알림 방식은 두 가지가 기본값이다.
+
+- `grouped completion`
+  - 지정한 worker 묶음이 전부 끝난 뒤 한 번에 보고한다
+- `immediate completion`
+  - 각 worker가 끝나는 즉시 개별 보고한다
+
+오케스트레이션 에이전트가 사용자에게 요청하는 방식:
+
+- 전부 완료 후 다음 단계로 넘어가야 하는 경우
+  - `이 4개 작업은 전부 끝나면 알려주세요.`
+- 일부는 묶고 일부는 즉시 받아야 하는 경우
+  - `docs-1, docs-2는 같이 끝나면 알려주시고, server-1과 web-1은 끝나는대로 알려주세요.`
+- 특정 조합이 끝나야 다음 작업을 열 수 있는 경우
+  - `docs-1, server-1이 끝나면 먼저 알려주세요. 나머지는 계속 진행시키겠습니다.`
+- 먼저 끝나는 것부터 다음 분배에 활용할 수 있는 경우
+  - `먼저 끝나는 worker가 있으면 바로 알려주세요.`
+
+권장 내부 표현:
+
+```json
+{
+  "completion_policy": {
+    "groups": [
+      {
+        "mode": "grouped",
+        "workers": ["docs-1", "docs-2"]
+      },
+      {
+        "mode": "immediate",
+        "workers": ["server-1", "web-1"]
+      }
+    ]
+  }
+}
+```
+
+기본 요청 규칙:
+
+- 사용자가 별도 기준을 아직 주지 않았다면, 오케스트레이션 에이전트가
+  분배 직후 완료 알림 요청 문구를 먼저 제안한다.
+- 이 요청은 "내가 어떤 완료 신호를 기다리고 있는지"를 사용자에게 명확히 알려주는
+  용도다.
+- 사용자가 이후 `다 끝났다`, `docs 둘 다 끝났다`, `server 먼저 끝났다`처럼
+  알려주면 그 신호를 completion policy에 맞춰 해석한다.
+
+권장 요청 형식:
+
+- `전부 끝나면 알려주세요`
+- `A, B는 같이 끝나면 알려주세요`
+- `C, D는 끝나는대로 알려주세요`
+- `A/B가 끝나면 먼저 알려주시고, 나머지는 계속 보겠습니다`
+
+사용자 응답 해석:
+
+- `다 끝났다`
+  - 전체 grouped completion 조건이 충족된 것으로 본다
+- `docs 둘 다 끝났다`
+  - 해당 grouped completion 묶음이 충족된 것으로 본다
+- `server 끝났다`
+  - 해당 immediate completion worker가 완료된 것으로 본다
+- `docs-1, server-1 끝났다`
+  - 조건부 grouped completion 또는 복수 immediate completion으로 해석한다
+
+필수 규칙:
+
+- 완료 알림 정책을 해석했으면 런타임 JSON에도 기록한다.
+- 병렬 작업을 시작한 직후에는 사용자에게 완료 알림 요청 문구를 함께 전달한다.
+- grouped completion 묶음은 일부 worker만 끝났다고 바로 사용자에게 완료로 보고하지 않는다.
+- immediate completion worker는 완료 확인 즉시 사용자에게 짧게 알린다.
+- 최종 결과 수집/요약은 완료 알림 정책과 별개로, 사용자의 다음 지시에 따라 진행할 수 있다.
 
 ## 사용자 요청 해석 가이드
 
