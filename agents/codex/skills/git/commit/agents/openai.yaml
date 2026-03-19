@@ -1,6 +1,6 @@
 interface:
   display_name: "git-commit"
-  short_description: "commit 생성"
+  short_description: "커밋(commit) 생성"
 
 policy:
   allow_implicit_invocation: false
