@@ -37,6 +37,13 @@ uv run telegram-bot
 - `docker-compose.yml` 포함
 - `docker-compose.dokploy.yml` 포함
 - SQLite 데이터는 `/app/data/telegram-bot.sqlite3` 에 저장되며 volume으로 유지됩니다.
+- 배포 시 `migrate` 서비스가 Atlas로 SQLite migration을 먼저 적용한 뒤 bot이 시작됩니다.
+
+## Migration
+- Atlas 사용
+- 설정 파일: `atlas.hcl`
+- 마이그레이션 파일: `migrations/`
+- 새 스키마 변경이 생기면 migration 파일을 추가하고, 배포 시 자동 적용됩니다.
 
 ## DB
 기본적으로 SQLite를 사용합니다.
@@ -44,8 +51,8 @@ uv run telegram-bot
 - 기본 경로: `./data/telegram-bot.sqlite3`
 - 변경 가능: `.env`의 `SQLITE_PATH`
 
-필수 테이블:
-- `lotto_purchases`
-- `alarm_settings`
+기본 스키마 소스:
+- `schema/schema.sql`
 
-스키마는 `schema/schema.sql` 참고.
+배포 적용 기준:
+- `migrations/` 의 Atlas migration 파일
