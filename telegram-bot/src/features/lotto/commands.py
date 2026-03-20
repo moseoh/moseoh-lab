@@ -81,14 +81,6 @@ async def lotto_disable(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
     await message.reply_text("이 DM의 로또 알림을 껐습니다.")
 
 
-async def lotto_set_alarm(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    await lotto_enable(update, context)
-
-
-async def lotto_unset_alarm(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    await lotto_disable(update, context)
-
-
 async def lotto_status(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     message = update.effective_message
     user = update.effective_user

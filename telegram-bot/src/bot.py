@@ -9,9 +9,7 @@ from telegram.ext import (
 from src.features.lotto.commands import (
     lotto_disable,
     lotto_enable,
-    lotto_set_alarm,
     lotto_status,
-    lotto_unset_alarm,
     start_command,
 )
 from src.features.lotto.constants import LOTTO
@@ -39,8 +37,6 @@ def build_application(token: str) -> Application:
     application.add_handler(CommandHandler("start", start_command))
     application.add_handler(CommandHandler("lotto_enable", lotto_enable))
     application.add_handler(CommandHandler("lotto_disable", lotto_disable))
-    application.add_handler(CommandHandler("lotto_set_alarm", lotto_set_alarm))
-    application.add_handler(CommandHandler("lotto_unset_alarm", lotto_unset_alarm))
     application.add_handler(CommandHandler("lotto_status", lotto_status))
     application.add_handler(CallbackQueryHandler(handle_purchase_button, pattern=f"^{LOTTO.BUTTON_ID}$"))
     return application
