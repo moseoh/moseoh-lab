@@ -96,16 +96,18 @@ cmux read-screen --surface surface:<N> --scrollback --lines 200
 
 ## 결과 수집
 
-우선순위:
+기본 원칙:
 
-1. `cmux list-notifications`
-2. `cmux read-screen --surface ...`
+- 완료 여부는 `cmux list-notifications`로 판단한다.
+- `cmux read-screen --surface ...`는 결과 수집 절차의 일부가 아니다.
+- `read-screen`은 단지 존재하는 기능일 뿐이며, 예외 상황에서만 참고할 수 있다.
 
 주의:
 
 - 에이전트 완료 알림은 `list-notifications`로 잘 수집된다.
 - 수동 `cmux notify`는 실행되더라도 `list-notifications`에 항상 잡힌다고 가정하지 않는다.
 - 따라서 `notify`는 보조 신호로만 본다.
+- 알림으로 해결되지 않는 문제가 생기면 먼저 사용자에게 알린다.
 
 관련 명령:
 
@@ -132,7 +134,6 @@ cmux send-key --surface $s Enter
 
 ```bash
 cmux list-notifications
-cmux read-screen --surface $s --scrollback --lines 120
 cmux close-surface --surface $s
 ```
 
@@ -140,3 +141,5 @@ cmux close-surface --surface $s
 
 - 레이아웃은 `orch` 같은 상위 스킬이 결정한다.
 - `cmux`는 만들고, 이름 붙이고, 보내고, 읽고, 닫는 도구다.
+- 완료 여부는 `list-notifications`로 판단한다.
+- 알림으로 처리되지 않는 문제는 사용자에게 먼저 제기한다.
