@@ -15,7 +15,14 @@ def _scope_id(chat_id: int) -> str:
 
 async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     if update.message:
-        await update.message.reply_text("안녕하세요. 텔레그램 로또 알림 봇입니다.")
+        await update.message.reply_text(
+            "안녕하세요. 개인 자동화 봇입니다.\n\n"
+            "현재는 로또 알림 기능이 먼저 들어가 있습니다.\n"
+            "사용 가능한 명령어:\n"
+            "- /lotto_set_alarm : 현재 채팅을 로또 알림 채팅으로 설정\n"
+            "- /lotto_unset_alarm : 로또 알림 해제\n"
+            "- /lotto_status : 이번 주 구매 상태 확인"
+        )
 
 
 async def lotto_set_alarm(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
