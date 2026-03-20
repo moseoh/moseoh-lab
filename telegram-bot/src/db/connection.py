@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 
 from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
 
@@ -6,12 +7,10 @@ _engine: AsyncEngine | None = None
 
 
 def get_database_url() -> str:
-    host = os.getenv("DB_HOST", "localhost")
-    port = os.getenv("DB_PORT", "5432")
-    user = os.getenv("DB_USER", "postgres")
-    password = os.getenv("DB_PASSWORD", "postgres")
-    name = os.getenv("DB_NAME", "telegram_bot")
-    return f"postgresql+asyncpg://{user}:{password}@{host}:{port}/{name}"
+    db_path = os.getenv("SQLITE_PATH", "./data/telegram-bot.sqlite3")
+    resolved = Path(db_path).expanduser().resolve()
+    resolved.parent.mkdir(parents=True, exist_ok=True)
+    return f"sqlite+aiosqlite:///{resolved}"
 
 
 def get_engine() -> AsyncEngine:

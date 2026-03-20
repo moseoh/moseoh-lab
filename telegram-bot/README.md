@@ -1,6 +1,7 @@
 # telegram-bot
 
 Telegram용 로또 알림 봇입니다. Discord 봇의 핵심 기능을 Telegram으로 옮긴 버전입니다.
+작은 단일 기능 봇이라 Postgres 대신 SQLite 기반으로 단순하게 운영합니다.
 
 ## 기능
 - 주간 로또 구매 알림 스케줄 발송
@@ -21,11 +22,15 @@ Telegram용 로또 알림 봇입니다. Discord 봇의 핵심 기능을 Telegram
 ```bash
 cp .env.example .env
 # 환경변수 수정
+mkdir -p data
 uv run telegram-bot
 ```
 
 ## DB
-기본적으로 PostgreSQL을 사용합니다.
+기본적으로 SQLite를 사용합니다.
+
+- 기본 경로: `./data/telegram-bot.sqlite3`
+- 변경 가능: `.env`의 `SQLITE_PATH`
 
 필수 테이블:
 - `lotto_purchases`
