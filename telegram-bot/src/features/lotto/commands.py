@@ -13,61 +13,56 @@ def _scope_id(chat_id: int) -> str:
     return str(chat_id)
 
 
+def _chat_title(chat) -> str:
+    return chat.title or chat.full_name or chat.username or str(chat.id)
+
+
 async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     if update.message:
         await update.message.reply_text(
             "안녕하세요. 개인 자동화 봇입니다.\n\n"
             "현재는 로또 알림 기능이 먼저 들어가 있습니다.\n"
             "사용 가능한 명령어:\n"
-            "- /lotto_set_alarm : 현재 채팅을 로또 알림 채팅으로 설정\n"
-            "- /lotto_unset_alarm : 로또 알림 해제\n"
+            "- /lotto_enable : 이 DM으로 로또 알림 받기\n"
+            "- /lotto_disable : 이 DM의 로또 알림 끄기\n"
             "- /lotto_status : 이번 주 구매 상태 확인"
         )
 
 
-async def lotto_set_alarm(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+async def lotto_enable(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     message = update.effective_message
     chat = update.effective_chat
-    user = update.effective_user
-    if message is None or chat is None or user is None:
+    if message is None or chat is None:
         return
 
-    member = await context.bot.get_chat_member(chat.id, user.id)
-    if member.status not in {"administrator", "creator"}:
-        await message.reply_text(LOTTO.MESSAGES.ADMIN_ONLY)
+    if chat.type != "private":
+        await message.reply_text("이 명령은 DM에서만 사용할 수 있습니다.")
         return
 
     scope_id = _scope_id(chat.id)
     engine = get_engine()
     async with engine.connect() as conn:
         querier = SettingsQuerier(conn)
-        existing = await querier.get_alarm_setting(scope_id=scope_id, alarm_type=LOTTO.ALARM_TYPE)
-        if existing:
-            await message.reply_text(f"이미 알림 채팅이 설정되어 있습니다. ({existing.chat_title or existing.chat_id})")
-            return
-
         await querier.upsert_alarm_setting(
             scope_id=scope_id,
             alarm_type=LOTTO.ALARM_TYPE,
             chat_id=str(chat.id),
-            chat_title=chat.title,
+            chat_title=_chat_title(chat),
         )
         await conn.commit()
 
-    logger.info(f"알람 채팅 설정: scope={scope_id}, chat={chat.id}")
-    await message.reply_text("이 채팅을 로또 알림 채팅으로 설정했습니다.")
+    logger.info(f"개인 로또 알림 활성화: scope={scope_id}, chat={chat.id}")
+    await message.reply_text("이 DM으로 로또 알림을 보내드릴게요.")
 
 
-async def lotto_unset_alarm(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+async def lotto_disable(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     message = update.effective_message
     chat = update.effective_chat
-    user = update.effective_user
-    if message is None or chat is None or user is None:
+    if message is None or chat is None:
         return
 
-    member = await context.bot.get_chat_member(chat.id, user.id)
-    if member.status not in {"administrator", "creator"}:
-        await message.reply_text(LOTTO.MESSAGES.ADMIN_ONLY)
+    if chat.type != "private":
+        await message.reply_text("이 명령은 DM에서만 사용할 수 있습니다.")
         return
 
     scope_id = _scope_id(chat.id)
@@ -76,14 +71,22 @@ async def lotto_unset_alarm(update: Update, context: ContextTypes.DEFAULT_TYPE) 
         querier = SettingsQuerier(conn)
         existing = await querier.get_alarm_setting(scope_id=scope_id, alarm_type=LOTTO.ALARM_TYPE)
         if not existing:
-            await message.reply_text("설정된 알림이 없습니다.")
+            await message.reply_text("현재 이 DM에 설정된 로또 알림이 없습니다.")
             return
 
         await querier.delete_alarm_setting(scope_id=scope_id, alarm_type=LOTTO.ALARM_TYPE)
         await conn.commit()
 
-    logger.info(f"알람 채팅 해제: scope={scope_id}")
-    await message.reply_text("로또 알림이 해제되었습니다.")
+    logger.info(f"개인 로또 알림 비활성화: scope={scope_id}")
+    await message.reply_text("이 DM의 로또 알림을 껐습니다.")
+
+
+async def lotto_set_alarm(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    await lotto_enable(update, context)
+
+
+async def lotto_unset_alarm(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    await lotto_disable(update, context)
 
 
 async def lotto_status(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:

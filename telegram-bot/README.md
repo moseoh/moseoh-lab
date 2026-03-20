@@ -10,13 +10,17 @@ Telegram용 로또 알림 봇입니다. Discord 봇의 핵심 기능을 Telegram
   - `구매 완료`
 - 사용자가 `구매 완료`를 누르면 이번 주 구매 기록 저장
 - 이번 주에 이미 누군가 구매 완료 처리했으면 이후 알림 스킵
-- 관리자만 알림 채팅방 설정/해제 가능
+- Telegram 특성에 맞춰 **DM 중심**으로 사용
 
 ## 명령어
 - `/start` : 개인 자동화 봇 소개 및 사용 가능한 기능 안내
-- `/lotto_set_alarm` : 현재 채팅을 로또 알림 채팅으로 설정 (관리자 전용)
-- `/lotto_unset_alarm` : 로또 알림 해제 (관리자 전용)
+- `/lotto_enable` : 이 DM으로 로또 알림 받기
+- `/lotto_disable` : 이 DM의 로또 알림 끄기
 - `/lotto_status` : 이번 주 구매 상태 확인
+
+호환용 alias:
+- `/lotto_set_alarm` → `/lotto_enable`
+- `/lotto_unset_alarm` → `/lotto_disable`
 
 > Telegram 명령어 메뉴는 그룹 폴더처럼 접히지 않으므로, `lotto_*` 네이밍으로 한눈에 같은 기능군처럼 보이게 구성했습니다.
 
