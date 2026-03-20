@@ -1,0 +1,14 @@
+services:
+  bot:
+    build: .
+    container_name: telegram-bot
+    restart: unless-stopped
+    environment:
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+      - TZ=${TZ:-Asia/Seoul}
+      - SQLITE_PATH=/app/data/telegram-bot.sqlite3
+    volumes:
+      - telegram_bot_data:/app/data
+
+volumes:
+  telegram_bot_data:
