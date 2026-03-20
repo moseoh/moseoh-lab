@@ -1,4 +1,5 @@
 from loguru import logger
+from telegram import BotCommand
 from telegram.ext import (
     Application,
     CallbackQueryHandler,
@@ -17,7 +18,15 @@ from src.features.lotto.scheduler import start_lotto_scheduler
 
 
 async def post_init(application: Application) -> None:
-    logger.info("텔레그램 봇 초기화 완료")
+    await application.bot.set_my_commands(
+        [
+            BotCommand("start", "개인 자동화 봇 소개와 사용 가능한 기능 안내"),
+            BotCommand("lotto_set_alarm", "현재 채팅을 로또 알림 채팅으로 설정"),
+            BotCommand("lotto_unset_alarm", "현재 채팅의 로또 알림 설정 해제"),
+            BotCommand("lotto_status", "이번 주 로또 구매 상태 확인"),
+        ]
+    )
+    logger.info("텔레그램 봇 초기화 및 명령어 등록 완료")
     if application.bot_data.get("scheduler") is None:
         application.bot_data["scheduler"] = start_lotto_scheduler(application)
 
