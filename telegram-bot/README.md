@@ -18,6 +18,10 @@ Telegram용 로또 알림 봇입니다. Discord 봇의 핵심 기능을 Telegram
 - `/lotto_disable` : 이 DM의 로또 알림 끄기
 - `/lotto_status` : 이번 주 구매 상태 확인
 
+호환용 alias:
+- `/lotto_set_alarm` → `/lotto_enable`
+- `/lotto_unset_alarm` → `/lotto_disable`
+
 > Telegram 명령어 메뉴는 그룹 폴더처럼 접히지 않으므로, `lotto_*` 네이밍으로 한눈에 같은 기능군처럼 보이게 구성했습니다.
 
 ## 실행
