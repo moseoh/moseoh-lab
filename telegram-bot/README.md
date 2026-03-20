@@ -26,6 +26,12 @@ mkdir -p data
 uv run telegram-bot
 ```
 
+## Docker / Dokploy
+- `Dockerfile` 포함
+- `docker-compose.yml` 포함
+- `docker-compose.dokploy.yml` 포함
+- SQLite 데이터는 `/app/data/telegram-bot.sqlite3` 에 저장되며 volume으로 유지됩니다.
+
 ## DB
 기본적으로 SQLite를 사용합니다.
 
