@@ -1,0 +1,21 @@
+{
+  "thumbnail": {
+    "width": 1600,
+    "ratio": "16:10",
+    "defaultBackground": "#ffffff"
+  },
+  "logo": {
+    "heightRatio": 0.7,
+    "widthRatio": 0.7,
+    "defaultColor": "#000000"
+  },
+  "paths": {
+    "assets": "./assets/book-cover",
+    "output": "./output/book-cover",
+    "target": "/Users/seongha.moon/Library/CloudStorage/GoogleDrive-azqazq195@gmail.com/내 드라이브/asset/thumbnails"
+  },
+  "fileConvention": {
+    "separator": "-",
+    "description": "파일명 형식: {로고이름}-{로고색상}-{배경색상}.{확장자}"
+  }
+}
