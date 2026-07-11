@@ -32,12 +32,13 @@ mkdir -p data
 uv run telegram-bot
 ```
 
-## Docker / Dokploy
-- `Dockerfile` 포함
-- `docker-compose.yml` 포함
-- `docker-compose.dokploy.yml` 포함
-- SQLite 데이터는 `/app/data/telegram-bot.sqlite3` 에 저장되며 volume으로 유지됩니다.
-- 배포 시 `migrate` 서비스가 Atlas로 SQLite migration을 먼저 적용한 뒤 bot이 시작됩니다.
+## Docker
+
+```bash
+docker build -t telegram-bot .
+```
+
+컨테이너에서 SQLite 데이터는 `/app/data/telegram-bot.sqlite3`에 저장됩니다.
 
 ## Kubernetes
 

@@ -1,21 +1,6 @@
 version: 2
 
 updates:
-  # Discord 봇의 Python 의존성과 uv 잠금 파일을 관리합니다.
-  - package-ecosystem: "pip"
-    directory: "/discord-bot"
-    schedule:
-      interval: "weekly"
-      day: "monday"
-      time: "09:00"
-      timezone: "Asia/Seoul"
-    labels:
-      - "dependencies"
-      - "python"
-      - "discord-bot"
-    commit-message:
-      prefix: "deps"
-
   # Telegram 봇의 Python 의존성을 관리합니다.
   - package-ecosystem: "pip"
     directory: "/applications/telegram-bot"
@@ -43,21 +28,6 @@ updates:
       - "dependencies"
       - "javascript"
       - "thumbnail-generator"
-    commit-message:
-      prefix: "deps"
-
-  # Discord 봇 Dockerfile의 베이스 이미지를 관리합니다.
-  - package-ecosystem: "docker"
-    directory: "/discord-bot"
-    schedule:
-      interval: "weekly"
-      day: "monday"
-      time: "09:30"
-      timezone: "Asia/Seoul"
-    labels:
-      - "dependencies"
-      - "docker"
-      - "discord-bot"
     commit-message:
       prefix: "deps"
 
