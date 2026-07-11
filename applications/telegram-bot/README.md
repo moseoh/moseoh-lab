@@ -39,6 +39,10 @@ uv run telegram-bot
 - SQLite 데이터는 `/app/data/telegram-bot.sqlite3` 에 저장되며 volume으로 유지됩니다.
 - 배포 시 `migrate` 서비스가 Atlas로 SQLite migration을 먼저 적용한 뒤 bot이 시작됩니다.
 
+## Kubernetes
+
+재사용 가능한 Kustomize base와 배포 방법은 [`deploy/kubernetes`](deploy/kubernetes/README.md)를 참고하세요.
+
 ## Migration
 - Atlas 사용
 - 설정 파일: `atlas.hcl`
