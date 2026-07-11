@@ -15,8 +15,19 @@ def test_kubernetes_readme가_overlay_endpoint_주입을_안내한다():
     readme = (APP_ROOT / "deploy/kubernetes/README.md").read_text()
 
     assert "OTEL_EXPORTER_OTLP_ENDPOINT" in readme
-    assert "http://otel-gateway.observability.svc.cluster.local:4317" in readme
     assert "Collector의 filelog receiver" in readme
+
+
+def test_kubernetes가_otel_endpoint_patch_예제를_제공한다():
+    example_path = APP_ROOT / "deploy/kubernetes/examples/opentelemetry-patch.yaml"
+    readme = (APP_ROOT / "deploy/kubernetes/README.md").read_text()
+
+    assert example_path.is_file()
+    example = example_path.read_text()
+    assert "kind: Deployment" in example
+    assert "name: OTEL_EXPORTER_OTLP_ENDPOINT" in example
+    assert "http://otel-gateway.observability.svc.cluster.local:4317" in example
+    assert "examples/opentelemetry-patch.yaml" in readme
 
 
 def test_app_readme가_telemetry와_벤치마크_정책을_설명한다():
