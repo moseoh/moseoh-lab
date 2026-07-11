@@ -31,7 +31,7 @@ from opentelemetry.sdk.trace.export import (
     SpanExportResult,
     SpanExporter,
 )
-from opentelemetry.trace import Status, StatusCode
+from opentelemetry.trace import SpanKind, Status, StatusCode
 
 
 _F = TypeVar("_F", bound=Callable[..., Any])
@@ -190,6 +190,7 @@ class _OperationObservation(AbstractContextManager):
             span_name, attribute_name = _operation_span_fields(self.kind)
             self._span_context = self.runtime.tracer.start_as_current_span(
                 span_name,
+                kind=_operation_span_kind(self.kind),
                 attributes={attribute_name: self.name},
                 record_exception=False,
                 set_status_on_exception=False,
@@ -372,6 +373,12 @@ def _operation_span_fields(kind: str) -> tuple[str, str]:
     if kind == "scheduler":
         return "scheduler.job", "scheduler.job.name"
     return "bot.initialize", "bot.operation"
+
+
+def _operation_span_kind(kind: str) -> SpanKind:
+    if kind in {"command", "callback"}:
+        return SpanKind.CONSUMER
+    return SpanKind.INTERNAL
 
 
 def _record_operation_metrics(

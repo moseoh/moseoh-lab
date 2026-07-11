@@ -8,6 +8,7 @@ from opentelemetry.sdk._logs.export import InMemoryLogRecordExporter
 from opentelemetry.sdk.metrics.export import InMemoryMetricReader
 from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
 from opentelemetry.instrumentation.httpx import HTTPXClientInstrumentor
+from opentelemetry.trace import SpanKind
 
 from src import telemetry
 
@@ -114,6 +115,7 @@ async def test_command_성공과_실패를_span과_metric으로_기록한다(tel
     assert runtime.force_flush(timeout_seconds=1)
     spans = span_exporter.get_finished_spans()
     assert [span.name for span in spans] == ["telegram.command", "telegram.command"]
+    assert all(span.kind is SpanKind.CONSUMER for span in spans)
     assert spans[0].attributes == {
         "telegram.command.name": "start",
         "operation.outcome": "success",
@@ -135,7 +137,7 @@ async def test_command_성공과_실패를_span과_metric으로_기록한다(tel
 
 @pytest.mark.asyncio
 async def test_callback_성공과_실패를_metric으로_기록한다(telemetry_runtime):
-    _, _, metric_reader, _ = telemetry_runtime
+    runtime, span_exporter, metric_reader, _ = telemetry_runtime
 
     @telemetry.instrument_callback("purchase_complete")
     async def success():
@@ -149,6 +151,10 @@ async def test_callback_성공과_실패를_metric으로_기록한다(telemetry_
     with pytest.raises(RuntimeError):
         await failure()
 
+    assert runtime.force_flush(timeout_seconds=1)
+    spans = span_exporter.get_finished_spans()
+    assert [span.name for span in spans] == ["telegram.callback", "telegram.callback"]
+    assert all(span.kind is SpanKind.CONSUMER for span in spans)
     assert len(_metric_points(metric_reader, "telegram.callback.executions")) == 2
     assert len(_metric_points(metric_reader, "telegram.callback.failures")) == 1
     assert len(_metric_points(metric_reader, "telegram.callback.duration")) == 2
@@ -163,6 +169,7 @@ def test_scheduler의_잡힌_오류도_error로_기록한다(telemetry_runtime):
     assert runtime.force_flush(timeout_seconds=1)
     span = span_exporter.get_finished_spans()[0]
     assert span.name == "scheduler.job"
+    assert span.kind is SpanKind.INTERNAL
     assert span.attributes == {
         "scheduler.job.name": "weekday_reminder",
         "operation.outcome": "error",
