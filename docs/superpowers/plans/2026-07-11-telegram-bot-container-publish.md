@@ -112,7 +112,7 @@ jobs:
 Run:
 
 ```bash
-ruby -e 'require "yaml"; YAML.load_file(".github/workflows/telegram-bot-image.yml", aliases: true)'
+ruby -e 'require "yaml"; YAML.load_file(".github/workflows/telegram-bot-image.yml")'
 rg -n 'applications/telegram-bot/\*\*|telegram-bot-image.yml|packages: write|push: \$\{\{ github.event_name == .push. \}\}|type=raw,value=latest|type=sha,prefix=sha-,format=short|context: applications/telegram-bot' .github/workflows/telegram-bot-image.yml
 git diff --check
 ```
