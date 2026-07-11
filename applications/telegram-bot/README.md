@@ -44,6 +44,45 @@ docker build -t telegram-bot .
 
 재사용 가능한 Kustomize base와 배포 방법은 [`deploy/kubernetes`](deploy/kubernetes/README.md)를 참고하세요.
 
+## OpenTelemetry
+
+`OTEL_EXPORTER_OTLP_ENDPOINT`가 설정된 경우에만 Metrics, Traces, Logs를 OTLP/gRPC로 전송합니다. 애플리케이션은 클러스터 내부 OTel Gateway만 바라보며 Grafana Cloud 인증정보를 사용하지 않습니다.
+
+기본 Resource attribute:
+
+- `service.name=telegram-bot`
+- `service.namespace=homelab`
+- `deployment.environment.name=production`
+- `service.version=0.1.0`
+
+표준 `OTEL_SERVICE_NAME`, `OTEL_RESOURCE_ATTRIBUTES`, `OTEL_TRACES_SAMPLER`, `OTEL_TRACES_SAMPLER_ARG`로 기본값을 변경할 수 있습니다. `service.version`을 이미지 버전으로 지정하려면 다음처럼 설정합니다.
+
+```bash
+OTEL_RESOURCE_ATTRIBUTES=service.version=sha-abcdef0
+```
+
+Telegram Bot의 수집 정책:
+
+- Metrics는 전부 수집
+- Trace는 100% 수집
+- Logs는 INFO 이상 수집
+- HTTPX와 SQLAlchemy 자동 계측 수집
+- Python process/runtime metrics 수집
+
+수집되는 custom metric:
+
+- `telegram.command.executions`, `telegram.command.failures`, `telegram.command.duration`
+- `telegram.callback.executions`, `telegram.callback.failures`, `telegram.callback.duration`
+- `scheduler.job.executions`, `scheduler.job.failures`, `scheduler.job.duration`
+
+벤치마크 앱은 비용과 데이터량을 줄이기 위해 별도 정책을 사용합니다.
+
+- Metrics는 전부 수집
+- 정상 Trace는 1~5% sampling
+- 오류 및 느린 Trace는 가능한 경우 보존
+- Logs는 WARN 이상 또는 반복 로그 제거
+- 테스트 종료 후 Collector 수집 대상에서 제거
+
 ## Migration
 - Atlas 사용
 - 설정 파일: `atlas.hcl`

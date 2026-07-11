@@ -45,4 +45,4 @@ async def send_reminder_if_needed(bot, chat_id: str) -> None:
         reply_markup=reply_markup,
         parse_mode=ParseMode.HTML,
     )
-    logger.info(f"알림 전송 완료: chat_id={chat_id}")
+    logger.info("알림 전송 완료")

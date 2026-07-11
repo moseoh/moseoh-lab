@@ -43,3 +43,22 @@ images:
 ```
 
 PVC 용량이나 StorageClass는 소비 저장소의 patch에서 변경합니다.
+
+## OpenTelemetry
+
+Kubernetes base는 환경별 OTel Gateway 주소나 Grafana Cloud 인증정보를 포함하지 않습니다. 소비 저장소의 Kustomize overlay에서 Deployment에 endpoint를 주입합니다.
+
+```yaml
+patches:
+  - target:
+      kind: Deployment
+      name: telegram-bot
+    patch: |-
+      - op: add
+        path: /spec/template/spec/containers/0/env/-
+        value:
+          name: OTEL_EXPORTER_OTLP_ENDPOINT
+          value: http://otel-gateway.observability.svc.cluster.local:4317
+```
+
+`OTEL_EXPORTER_OTLP_ENDPOINT`가 없으면 애플리케이션 계측은 비활성화되고 Bot은 기존처럼 실행됩니다. stdout은 `kubectl logs` 확인용으로 유지하며, 이 앱의 로그를 Collector의 filelog receiver로 다시 수집하지 않습니다. Grafana에는 애플리케이션 OTel Logs SDK가 전송한 로그만 저장해 중복을 방지합니다.
