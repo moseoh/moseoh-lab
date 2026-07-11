@@ -18,7 +18,7 @@ updates:
 
   # Telegram 봇의 Python 의존성을 관리합니다.
   - package-ecosystem: "pip"
-    directory: "/telegram-bot"
+    directory: "/applications/telegram-bot"
     schedule:
       interval: "weekly"
       day: "monday"
@@ -63,7 +63,7 @@ updates:
 
   # Telegram 봇 Dockerfile의 베이스 이미지를 관리합니다.
   - package-ecosystem: "docker"
-    directory: "/telegram-bot"
+    directory: "/applications/telegram-bot"
     schedule:
       interval: "weekly"
       day: "monday"
