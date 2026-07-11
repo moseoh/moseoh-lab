@@ -1,0 +1,23 @@
+name: Telegram Bot Package Cleanup
+
+on:
+  schedule:
+    - cron: "17 18 * * *" # UTC 기준, 한국시간 매일 03:17
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  cleanup:
+    name: Keep latest 5 package versions
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Delete old package versions
+        uses: actions/delete-package-versions@v5
+        with:
+          package-name: telegram-bot
+          package-type: container
+          min-versions-to-keep: 5
