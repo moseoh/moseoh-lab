@@ -89,8 +89,6 @@ spec:
         - name: bot
           image: ghcr.io/moseoh/telegram-bot:latest
           imagePullPolicy: IfNotPresent
-          command:
-            - /app/.venv/bin/telegram-bot
           env:
             - name: TELEGRAM_BOT_TOKEN
               valueFrom:
