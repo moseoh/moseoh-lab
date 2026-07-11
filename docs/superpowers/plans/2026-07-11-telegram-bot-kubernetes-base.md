@@ -200,7 +200,7 @@ Run:
 ```bash
 test "$(rg -c '^kind: Deployment$' /tmp/telegram-bot-base.yaml)" = 1
 test "$(rg -c '^kind: PersistentVolumeClaim$' /tmp/telegram-bot-base.yaml)" = 1
-test "$(rg -c '^kind: (Namespace|Secret|Service|Ingress)$' /tmp/telegram-bot-base.yaml || true)" = 0
+! rg -q '^kind: (Namespace|Secret|Service|Ingress)$' /tmp/telegram-bot-base.yaml
 rg -n 'replicas: 1|type: Recreate|name: copy-migrations|name: migrate|claimName: telegram-bot-data|TELEGRAM_BOT_TOKEN|runAsNonRoot: true|readOnlyRootFilesystem: true' /tmp/telegram-bot-base.yaml
 git diff --check
 ```
