@@ -14,10 +14,10 @@
 
 ## 트리거
 
-다음 경로가 변경된 Pull Request와 `main` 브랜치 push에서 워크플로를 실행한다.
+CI와 CD를 명시적인 두 워크플로로 분리한다.
 
-- `applications/telegram-bot/**`
-- `.github/workflows/telegram-bot-image.yml`
+- `.github/workflows/telegram-bot-ci.yml`: `applications/telegram-bot/**` 또는 CI 워크플로 자체가 변경된 Pull Request에서 실행한다.
+- `.github/workflows/telegram-bot-cd.yml`: `applications/telegram-bot/**` 또는 CD 워크플로 자체가 변경된 `main` 브랜치 push에서 실행한다.
 
 Pull Request에서는 이미지를 빌드하되 레지스트리에 푸시하지 않는다. `main` 브랜치 push에서는 빌드한 이미지를 GHCR에 푸시한다.
 
@@ -32,20 +32,25 @@ Pull Request에서는 이미지를 빌드하되 레지스트리에 푸시하지 
 
 ## 워크플로 구성
 
-단일 job에서 다음 단계를 수행한다.
+CI 워크플로는 다음 단계를 수행한다.
 
 1. 저장소를 checkout한다.
 2. Docker Buildx를 설정한다.
-3. `main` push에서만 `GITHUB_TOKEN`으로 GHCR에 로그인한다.
+3. `applications/telegram-bot`을 컨텍스트로 이미지를 빌드하되 푸시하지 않는다.
+
+CD 워크플로는 다음 단계를 수행한다.
+
+1. 저장소를 checkout한다.
+2. Docker Buildx를 설정한다.
+3. `GITHUB_TOKEN`으로 GHCR에 로그인한다.
 4. Docker 메타데이터 액션으로 태그와 라벨을 생성한다.
-5. `applications/telegram-bot`을 컨텍스트로 이미지를 빌드한다.
-6. Pull Request에서는 빌드 결과만 검증하고, `main` push에서는 이미지를 푸시한다.
+5. `applications/telegram-bot`을 컨텍스트로 이미지를 빌드하고 푸시한다.
 
 GitHub Actions 캐시를 사용해 반복 빌드 시간을 줄인다. 같은 브랜치나 Pull Request에서 새 실행이 시작되면 이전 실행을 취소해 오래된 이미지를 중복 빌드하지 않는다.
 
 ## 권한과 보안
 
-워크플로 권한은 다음으로 제한한다.
+CI 워크플로 권한은 `contents: read`로 제한한다. CD 워크플로 권한은 다음으로 제한한다.
 
 - `contents: read`: 저장소 checkout
 - `packages: write`: `main`에서 GHCR 이미지 게시
@@ -58,9 +63,9 @@ checkout, Buildx 설정, 로그인, 메타데이터 생성 또는 Docker 빌드 
 
 ## 검증 기준
 
-- 워크플로 YAML이 유효하다.
-- 변경 감지 경로가 앱 전체와 워크플로 파일을 포함한다.
-- Pull Request 이벤트에서는 `push: false`로 빌드만 수행한다.
-- `main` push에서는 `latest`와 짧은 SHA 태그를 생성하고 GHCR에 푸시한다.
+- 두 워크플로 YAML이 유효하다.
+- 각 변경 감지 경로가 앱 전체와 해당 워크플로 파일을 포함한다.
+- CI 워크플로는 Pull Request에서 `push: false`로 빌드만 수행하고 `packages: write` 권한을 갖지 않는다.
+- CD 워크플로는 `main` push에서 `latest`와 짧은 SHA 태그를 생성하고 GHCR에 푸시한다.
 - Docker 빌드 컨텍스트와 Dockerfile 경로가 `applications/telegram-bot`을 가리킨다.
-- 워크플로 권한이 `contents: read`, `packages: write`로 제한된다.
+- CI 권한은 `contents: read`, CD 권한은 `contents: read`와 `packages: write`로 제한된다.
