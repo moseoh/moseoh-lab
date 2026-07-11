@@ -35,4 +35,4 @@ async def handle_purchase_button(update: Update, context: ContextTypes.DEFAULT_T
         await conn.commit()
 
     await query.answer(LOTTO.MESSAGES.PURCHASE_SUCCESS, show_alert=True)
-    logger.info(f"구매 완료 기록: {user_name} ({user_id})")
+    logger.info("구매 완료 기록 저장")

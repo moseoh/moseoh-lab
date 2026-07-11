@@ -3,6 +3,8 @@ from pathlib import Path
 
 from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
 
+from src.telemetry import instrument_sqlalchemy_engine
+
 _engine: AsyncEngine | None = None
 
 
@@ -17,4 +19,5 @@ def get_engine() -> AsyncEngine:
     global _engine
     if _engine is None:
         _engine = create_async_engine(get_database_url())
+        instrument_sqlalchemy_engine(_engine)
     return _engine

@@ -9,35 +9,38 @@ from .constants import LOTTO
 from .notification import send_reminder_if_needed
 from src.db.connection import get_engine
 from src.db.settings import AsyncQuerier
+from src.telemetry import observe_scheduler_job
 
 
 def start_lotto_scheduler(application: Application) -> AsyncIOScheduler:
     scheduler = AsyncIOScheduler()
     timezone = os.getenv("TZ", "Asia/Seoul")
 
-    async def send_reminder(label: str) -> None:
-        logger.info(f"스케줄 실행: {label}")
-        engine = get_engine()
-        async with engine.connect() as conn:
-            querier = AsyncQuerier(conn)
-            async for row in querier.get_alarm_settings_by_type(alarm_type=LOTTO.ALARM_TYPE):
-                try:
-                    await send_reminder_if_needed(application.bot, row.chat_id)
-                except Exception as e:
-                    logger.error(f"알림 전송 실패 (scope={row.scope_id}, chat={row.chat_id}): {e}")
+    async def send_reminder(job_name: str) -> None:
+        with observe_scheduler_job(job_name) as observation:
+            logger.info(f"스케줄 실행: {job_name}")
+            engine = get_engine()
+            async with engine.connect() as conn:
+                querier = AsyncQuerier(conn)
+                async for row in querier.get_alarm_settings_by_type(alarm_type=LOTTO.ALARM_TYPE):
+                    try:
+                        await send_reminder_if_needed(application.bot, row.chat_id)
+                    except Exception as error:
+                        observation.record_error(error)
+                        logger.error("알림 전송 실패")
 
     weekday_hours = ",".join(str(h) for h in LOTTO.WEEKDAY_HOURS)
     scheduler.add_job(
         send_reminder,
         CronTrigger(day_of_week="mon,tue,wed,thu,fri", hour=weekday_hours, minute=0, timezone=timezone),
-        args=["월~금"],
+        args=["weekday_reminder"],
     )
 
     saturday_hours = ",".join(str(h) for h in LOTTO.SATURDAY_HOURS)
     scheduler.add_job(
         send_reminder,
         CronTrigger(day_of_week="sat", hour=saturday_hours, minute=0, timezone=timezone),
-        args=["토요일"],
+        args=["saturday_reminder"],
     )
 
     scheduler.start()

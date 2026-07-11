@@ -51,7 +51,7 @@ async def lotto_enable(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
         )
         await conn.commit()
 
-    logger.info(f"개인 로또 알림 활성화: scope={scope_id}, chat={chat.id}")
+    logger.info("개인 로또 알림 활성화 완료")
     await message.reply_text("이 DM으로 로또 알림을 보내드릴게요.")
 
 
@@ -77,7 +77,7 @@ async def lotto_disable(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
         await querier.delete_alarm_setting(scope_id=scope_id, alarm_type=LOTTO.ALARM_TYPE)
         await conn.commit()
 
-    logger.info(f"개인 로또 알림 비활성화: scope={scope_id}")
+    logger.info("개인 로또 알림 비활성화 완료")
     await message.reply_text("이 DM의 로또 알림을 껐습니다.")
 
 
