@@ -14,7 +14,7 @@ dependencies = [
     "opentelemetry-sdk>=1.43.0",
     "opentelemetry-exporter-otlp-proto-grpc>=1.43.0",
     "opentelemetry-instrumentation-httpx>=0.64b0",
-    "opentelemetry-instrumentation-sqlalchemy>=0.64b0",
+    "opentelemetry-instrumentation-sqlalchemy>=0.65b0",
     "opentelemetry-instrumentation-system-metrics>=0.64b0",
 ]
 
